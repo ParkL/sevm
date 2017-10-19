@@ -136,6 +136,10 @@ object Sevm extends Requirements {
   case object DELEGATECALL  extends Op
   case object SUICIDE       extends Op
 
+  case class UNKNOWN_OPCODE(code: Int) extends Op {
+    override def toString: ErrorMessage = s"UNKNOWN-OPCODE(${code.toHexString})"
+  }
+
   val sysLexers = mkLexers0(0xf0)(
     CREATE, CALL, CALLCODE, RETURN, DELEGATECALL
   ) :+ mkLex0(0xff)(SUICIDE)
@@ -160,7 +164,8 @@ object Sevm extends Requirements {
       else {
         combinedLexer(current) match {
           case Some((op, rest)) => _lex(op +: acc, rest)
-          case None => Bad(acc.reverse, s"""Unexpected token ${current.head.toHexString}""")
+          case None => // Bad(acc.reverse, s"""Unexpected token ${current.head.toHexString}""")
+            _lex(UNKNOWN_OPCODE(current.head) +: acc, current.tail)
         }
       }
     }
@@ -168,4 +173,6 @@ object Sevm extends Requirements {
   }
 
   def lexer: Source => Disassembly Or (Disassembly, ErrorMessage) = lex(mkLex0(0x00)(STOP),allLexers: _*)
+
+  def disassemble = lexer compose tokenize
 }
