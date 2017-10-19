@@ -24,7 +24,7 @@ class SevmSpec extends FlatSpec with Matchers {
   }
 
   it should "disassemble" in {
-    println(disassemble(programs(1).toStream).get.mkString("\n"))
+    println(disassemble(programs(0).toStream).get.mkString("\n"))
   }
 
   it should """parse a while file""" in {
