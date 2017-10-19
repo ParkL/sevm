@@ -17,9 +17,9 @@ class SevmSpec extends FlatSpec with Matchers {
     val fstProgram = programs.head
     val chars = fstProgram.toStream
     val expSize = (fstProgram.length / 2) - 1 // minus "0x"
-    val tokenized = tokenize(chars)
+    val tokenized = tokenize(chars).get
     tokenized.size should ===(expSize)
-    val r = lexer(tokenized).get
+    val r = lexer(tokenized)
     println(r.mkString("\n"))
   }
 
@@ -32,11 +32,6 @@ class SevmSpec extends FlatSpec with Matchers {
     val rx = for {
       line <- source
       program <- line.split(',').headOption
-      tokenized = tokenize(program.toStream)
-    } yield lexer(tokenized)
-
-    val (goods, bads) = rx.partition(_.isGood)
-    println(s"Good: ${goods.size}, Bad: ${bads.size}")
-    println(bads.head.badMap(b => b._1.mkString("\n") + "\n" + b._2))
+    } yield tokenize(program.toStream).map(lexer)
   }
 }
