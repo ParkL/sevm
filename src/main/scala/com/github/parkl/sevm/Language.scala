@@ -132,7 +132,7 @@ object Language {
 
   object Push extends Lexers {
     case class PUSH(args: List[Token]) extends Op {
-      override def toString: String = s"PUSH${args.length}(${args.map(_.toHexString).mkString(",")})"
+      override def toString: String = s"PUSH${args.length}(0x${args.map(hs => f"$hs%02x").mkString})"
     }
 
     val lexers = for (i <- 0 until 32) yield mkLexN(0x60 + i, i + 1)(PUSH)
