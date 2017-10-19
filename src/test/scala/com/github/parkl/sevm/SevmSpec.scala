@@ -15,24 +15,24 @@ class SevmSpec extends FlatSpec with Matchers {
 
   """The tokenizer""" should """tokenize""" in {
     val fstProgram = programs.head
-    val charIt = fstProgram.toCharArray
+    val chars = fstProgram.toStream
     val expSize = (fstProgram.length / 2) - 1 // minus "0x"
-    val tokenized = tokenize(charIt)
+    val tokenized = tokenize(chars)
     tokenized.size should ===(expSize)
     val r = lexer(tokenized).get
     println(r.mkString("\n"))
   }
 
   it should "disassemble" in {
-    println(disassemble(programs(1).toCharArray).get.mkString("\n"))
+    println(disassemble(programs(1).toStream).get.mkString("\n"))
   }
 
   it should """parse a while file""" in {
-    val source = Source.fromURL(getClass.getResource(s"/$fle")).getLines().drop(1)
+    val source = Source.fromURL(getClass.getResource(s"/$fle")).getLines().toStream.drop(1)
     val rx = for {
-      (line, i) <- source.zipWithIndex.toList
+      line <- source
       program <- line.split(',').headOption
-      tokenized = tokenize(program.toCharArray)
+      tokenized = tokenize(program.toStream)
     } yield lexer(tokenized)
 
     val (goods, bads) = rx.partition(_.isGood)

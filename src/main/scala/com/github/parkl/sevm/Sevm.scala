@@ -9,20 +9,20 @@ object Sevm extends Requirements {
   sealed trait Op
 
   type Token = Int // Can't be Byte because of sign
-  type Source = List[Token]
+  type Source = Stream[Token]
   type Disassembly = Seq[Op]
   type Lexer = PartialFunction[Source, (Op, Source)]
   type Lexers = Seq[Lexer]
 
   def mkLex0(code: Token)(f: => Op): Lexer = {
-    { case `code` :: tail => (f, tail)}
+    { case `code` #:: tail => (f, tail)}
   }
 
   def mkLexN(code: Token, n: Int)(f: List[Token] => Op): Lexer = {
-    { case `code` :: tail =>
+    { case `code` #:: tail =>
       val args = tail.take(n)
       val rest = tail.drop(n)
-      (f(args), rest)
+      (f(args.toList), rest)
     }
   }
 
@@ -109,23 +109,23 @@ object Sevm extends Requirements {
   )
 
   case class PUSH(args: List[Token]) extends Op {
-    override def toString: ErrorMessage = s"PUSH${args.length}(${args.map(_.toHexString).mkString(",")})"
+    override def toString: String = s"PUSH${args.length}(${args.map(_.toHexString).mkString(",")})"
   }
   val pushLexers = for (i <- 0 until 32) yield mkLexN(0x60 + i, i + 1)(PUSH)
 
   case class DUP(stackItem: Int) extends Op {
-    override def toString: ErrorMessage = s"DUP$stackItem"
+    override def toString: String = s"DUP$stackItem"
   }
   val dupLexers = for (i <- 0 until 16) yield mkLex0(0x80 + i)(DUP(i + 1))
 
   case class SWAP(stackItem: Int) extends Op {
-    override def toString: ErrorMessage = s"SWAP$stackItem"
+    override def toString: String = s"SWAP$stackItem"
   }
   val swapLexers = for (i <- 0 until 16) yield mkLex0(0x90 + i)(SWAP(i + 1))
 
   // https://www.youtube.com/watch?v=-fQGPZTECYs
   case class LOG(topics: Int) extends Op {
-    override def toString: ErrorMessage = s"LOG$topics"
+    override def toString: String = s"LOG$topics"
   }
   val logLexers = for (i <- 0 to 4) yield mkLex0(0xa0 + i)(LOG(i))
 
@@ -137,7 +137,7 @@ object Sevm extends Requirements {
   case object SUICIDE       extends Op
 
   case class UNKNOWN_OPCODE(code: Int) extends Op {
-    override def toString: ErrorMessage = s"UNKNOWN-OPCODE(${code.toHexString})"
+    override def toString: String = s"UNKNOWN-OPCODE(${code.toHexString})"
   }
 
   val sysLexers = mkLexers0(0xf0)(
@@ -149,11 +149,11 @@ object Sevm extends Requirements {
       blockLexers ++ stackMemStorageFlow ++ pushLexers ++ dupLexers ++
       swapLexers ++ logLexers ++ sysLexers
 
-  def tokenize(chars: Array[Char]) = {
+  def tokenize(chars: Stream[Char]): Source = {
     val parseBase16 = Integer.parseInt(_: String, 16)
     val grouped = chars.grouped(2).map(_.mkString(""))
     val skippedPreamble = grouped.dropWhile(_ != "0x").drop(1)
-    skippedPreamble.map(_.mkString("")).map(parseBase16).toList
+    skippedPreamble.map(_.mkString).map(parseBase16).toStream
   }
 
   def lex(lexer: Lexer, lexers: Lexer*)(source: Source): Disassembly Or (Disassembly, ErrorMessage) = {
