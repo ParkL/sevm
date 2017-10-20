@@ -20,11 +20,11 @@ class SevmSpec extends FlatSpec with Matchers {
     val tokenized = tokenize(chars).get
     tokenized.size should ===(expSize)
     val r = lexer(tokenized)
-    println(r.mkString("\n"))
+    println(r.pretty)
   }
 
   it should "disassemble" in {
-    println(disassemble(programs(0).toStream).get.mkString("\n"))
+    println(disassemble(programs(1).toStream).get.pretty)
   }
 
   it should """parse a while file""" in {

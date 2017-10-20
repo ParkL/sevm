@@ -9,8 +9,17 @@ object Sevm extends Requirements {
   import Language._
 
   type Disassembly = Seq[(Op, Int)]
-
   type Lexers = Seq[Lexer]
+
+  implicit class PimpedDisassembly(disassembly: Disassembly) {
+    def pretty: String = {
+      val sb = new StringBuilder
+      for ( (op, lineNumber) <- disassembly ) {
+        sb.append(f"$lineNumber%#010x\t\t\t${op.toString}\n")
+      }
+      sb.toString()
+    }
+  }
 
   def tokenize(chars: Stream[Char]): Source Or Every[ErrorMessage] = {
     import Accumulation._

@@ -25,7 +25,7 @@ object Language {
   }
 
   case class UNKNOWN_OPCODE(code: Int) extends Op {
-    override def toString: String = s"UNKNOWN-OPCODE(${code.toHexString})"
+    override def toString: String = f"UNKNOWN-OPCODE($code%#2x)"
   }
 
   val lexers = Seq(
@@ -174,5 +174,4 @@ object Language {
       CREATE, CALL, CALLCODE, RETURN, DELEGATECALL
     ) :+ mkLex0(0xff)(SUICIDE)
   }
-
 }
