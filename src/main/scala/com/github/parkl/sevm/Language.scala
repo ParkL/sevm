@@ -5,11 +5,11 @@ object Language {
   trait Lexers { val lexers: Seq[Lexer] }
 
   type Token = Int // Can't be Byte because of sign
-  type Source = Stream[(Token, Int)]
+  type Source = List[(Token, Int)]
   type Lexer = PartialFunction[Source, ((Op, Int), Source)]
 
   def mkLex0(code: Token)(f: => Op): Lexer = {
-    { case (`code`, position) #:: tail => ((f, position), tail) }
+    { case (`code`, position):: tail => ((f, position), tail) }
   }
 
   def mkLexers0(offset: Int)(ops: Op*) =
@@ -17,10 +17,10 @@ object Language {
 
 
   def mkLexN(code: Token, n: Int)(f: List[Token] => Op): Lexer = {
-    { case (`code`, position) #:: tail =>
+    { case (`code`, position) :: tail =>
       val args = tail.take(n)
       val rest = tail.drop(n)
-      ((f(args.map(_._1).toList), position), rest)
+      ((f(args.map(_._1)), position), rest)
     }
   }
 
@@ -34,7 +34,7 @@ object Language {
   ).flatMap(_.lexers).reduce(_ orElse _)
 
   val catchAll: Lexer = {
-    case (code, position) #:: tail => ((UNKNOWN_OPCODE(code), position), tail)
+    case (code, position):: tail => ((UNKNOWN_OPCODE(code), position), tail)
   }
 
   val lexersWithUnknown = lexers orElse catchAll
