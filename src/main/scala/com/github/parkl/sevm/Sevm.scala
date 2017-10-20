@@ -21,7 +21,7 @@ object Sevm extends Requirements {
     }
   }
 
-  def tokenize(chars: Stream[Char]): Source Or Every[ErrorMessage] = {
+  def tokenize(chars: Array[Char]): Source Or Every[ErrorMessage] = {
     import Accumulation._
     def parseBase16(s: String): Int Or One[ErrorMessage] =
       Try { Integer.parseInt(s, 16) } match {
@@ -52,6 +52,6 @@ object Sevm extends Requirements {
 
   val lexer: Source => Disassembly = lex(lexersWithUnknown)
 
-  def disassemble(s: Stream[Char]): Disassembly Or Every[ErrorMessage] =
+  def disassemble(s: Array[Char]): Disassembly Or Every[ErrorMessage] =
     tokenize(s).map(lexer)
 }

@@ -16,19 +16,19 @@ class SevmSpec extends FlatSpec with Matchers {
   """Sevm Tokenizer""" should """produce output with the right length""" in {
     val fstProgram = programs.head
     val expSize = (fstProgram.length / 2) - 1 // minus "0x"
-    val tokenized = tokenize(fstProgram.toStream).get
+    val tokenized = tokenize(fstProgram.toCharArray).get
     tokenized.size should ===(expSize)
   }
 
   it should """reject malformed input""" in {
-    tokenize("""Loremipsumdolorsitamet""".toStream).isBad shouldBe true
+    tokenize("""Loremipsumdolorsitamet""".toCharArray).isBad shouldBe true
   }
 
   """Sevm Disassembler""" should "disassemble from strings" in {
     for {
       program <- programs
     } {
-      disassemble(program.toStream).isGood shouldBe true
+      disassemble(program.toCharArray).isGood shouldBe true
     }
   }
 
@@ -38,7 +38,7 @@ class SevmSpec extends FlatSpec with Matchers {
       line    <- source
       program <- line.split(',').headOption
     } {
-      disassemble(program.toStream).isGood shouldBe true
+      disassemble(program.toCharArray).isGood shouldBe true
     }
   }
 }
