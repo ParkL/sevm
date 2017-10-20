@@ -13,25 +13,32 @@ class SevmSpec extends FlatSpec with Matchers {
     """0x60606040523415600e57600080fd5b5b60fe60016000739d3f257827b17161a098d380822fa2614ff540c873ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020819055505b5b60368060776000396000f30060606040525b600080fd00a165627a7a7230582044b2b40d1e4a6cf4cf7a3f13e3d3e22e368fdf64a65a779c05080401c178618b0029"""
   )
 
-  """The tokenizer""" should """tokenize""" in {
+  """Sevm Tokenizer""" should """produce output with the right length""" in {
     val fstProgram = programs.head
-    val chars = fstProgram.toStream
     val expSize = (fstProgram.length / 2) - 1 // minus "0x"
-    val tokenized = tokenize(chars).get
+    val tokenized = tokenize(fstProgram.toStream).get
     tokenized.size should ===(expSize)
-    val r = lexer(tokenized)
-    println(r.pretty)
   }
 
-  it should "disassemble" in {
-    println(disassemble(programs(1).toStream).get.pretty)
+  it should """reject malformed input""" in {
+    tokenize("""Loremipsumdolorsitamet""".toStream).isBad shouldBe true
   }
 
-  it should """parse a while file""" in {
-    val source = Source.fromURL(getClass.getResource(s"/$fle")).getLines().toStream.drop(1)
-    val rx = for {
-      line <- source
+  """Sevm Disassembler""" should "disassemble from strings" in {
+    for {
+      program <- programs
+    } {
+      disassemble(program.toStream).isGood shouldBe true
+    }
+  }
+
+  it should """disassemlbe from local file""" in {
+    val source = Source.fromURL(getClass.getResource(s"/$fle")).getLines().toStream
+    for {
+      line    <- source
       program <- line.split(',').headOption
-    } yield tokenize(program.toStream).map(lexer)
+    } {
+      disassemble(program.toStream).isGood shouldBe true
+    }
   }
 }

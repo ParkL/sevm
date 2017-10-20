@@ -23,7 +23,7 @@ object Sevm extends Requirements {
 
   def tokenize(chars: Stream[Char]): Source Or Every[ErrorMessage] = {
     import Accumulation._
-    val pb16: String => Int Or One[ErrorMessage] = s =>
+    def parseBase16(s: String): Int Or One[ErrorMessage] =
       Try { Integer.parseInt(s, 16) } match {
         case Failure(_: NumberFormatException) =>
           Bad(One(s"Not a hex-number: `$s`"))
@@ -34,7 +34,7 @@ object Sevm extends Requirements {
       .grouped(2) // need pairs
       .map(_.mkString) // concat to strings
       .drop(1) // remove 0x
-      .validatedBy(pb16) // all ok Hex-Numbers?
+      .validatedBy(parseBase16) // all ok Hex-Numbers?
       .map(_.zipWithIndex) // line numbers
       .map(_.toStream) // if yes make stream
   }
