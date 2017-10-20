@@ -8,7 +8,7 @@ import scala.util.{Failure, Success, Try}
 object Sevm extends Requirements {
   import Language._
 
-  type Disassembly = Seq[Op]
+  type Disassembly = Seq[(Op, Int)]
 
   type Lexers = Seq[Lexer]
 
@@ -26,6 +26,7 @@ object Sevm extends Requirements {
       .map(_.mkString) // concat to strings
       .drop(1) // remove 0x
       .validatedBy(pb16) // all ok Hex-Numbers?
+      .map(_.zipWithIndex) // line numbers
       .map(_.toStream) // if yes make stream
   }
 
@@ -33,8 +34,8 @@ object Sevm extends Requirements {
     @tailrec def _lex(acc: Disassembly, current: Source): Disassembly = {
       if (current.isEmpty) acc.reverse // Anchor
       else {
-        val (op, rest) = lexer(current)
-        _lex(op +: acc, rest)
+        val (opAndPos, rest) = lexer(current)
+        _lex(opAndPos +: acc, rest)
       }
     }
     _lex(List.empty, source)
