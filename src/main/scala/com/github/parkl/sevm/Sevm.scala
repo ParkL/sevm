@@ -36,7 +36,7 @@ object Sevm extends Requirements {
       .drop(1) // remove 0x
       .validatedBy(parseBase16) // all ok Hex-Numbers?
       .map(_.zipWithIndex) // line numbers
-      .map(_.toList) // if yes make stream
+      .map(_.toList) // return list
   }
 
   def lex(lexer: Lexer)(source: Source): Disassembly = {

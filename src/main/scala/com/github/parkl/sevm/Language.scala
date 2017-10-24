@@ -2,30 +2,32 @@ package com.github.parkl.sevm
 
 object Language {
   sealed trait Op
-  trait Lexers { val lexers: Seq[Lexer] }
-
   type Token = Int // Can't be Byte because of sign
   type Source = List[(Token, Int)]
   type Lexer = PartialFunction[Source, ((Op, Int), Source)]
 
-  def mkLex0(code: Token)(f: => Op): Lexer = {
-    { case (`code`, position):: tail => ((f, position), tail) }
-  }
+  trait Lexers {
+    val lexers: Seq[Lexer]
 
-  def mkLexers0(offset: Int)(ops: Op*) =
-    for { (op, i) <- ops.zipWithIndex } yield mkLex0(i + offset)(op)
+    def mkLex0(code: Token)(f: => Op): Lexer = {
+      { case (`code`, position):: tail => ((f, position), tail) }
+    }
+
+    def mkLexers0(offset: Int)(ops: Op*) =
+      for { (op, i) <- ops.zipWithIndex } yield mkLex0(i + offset)(op)
 
 
-  def mkLexN(code: Token, n: Int)(f: List[Token] => Op): Lexer = {
-    { case (`code`, position) :: tail =>
-      val args = tail.take(n)
-      val rest = tail.drop(n)
-      ((f(args.map(_._1)), position), rest)
+    def mkLexN(code: Token, n: Int)(f: List[Token] => Op): Lexer = {
+      { case (`code`, position) :: tail =>
+        val args = tail.take(n)
+        val rest = tail.drop(n)
+        ((f(args.map(_._1)), position), rest)
+      }
     }
   }
 
   case class UNKNOWN_OPCODE(code: Int) extends Op {
-    override def toString: String = f"UNKNOWN-OPCODE($code%#2x)"
+    override def toString: String = f"UNKNOWN-OPCODE($code%#02x)"
   }
 
   val lexers = Seq(

@@ -28,17 +28,17 @@ class SevmSpec extends FlatSpec with Matchers {
     for {
       program <- programs
     } {
-      disassemble(program.toCharArray).isGood shouldBe true
+      val value1 = disassemble(program.toCharArray)
+      value1.isGood shouldBe true
+      println(value1.get.pretty)
     }
   }
 
   it should """disassemlbe from local file""" in {
-    val source = Source.fromURL(getClass.getResource(s"/$fle")).getLines().toStream
+    val source = Source.fromURL(getClass.getResource(s"/$fle")).getLines()
     for {
       line    <- source
       program <- line.split(',').headOption
-    } {
-      disassemble(program.toCharArray).isGood shouldBe true
-    }
+    } disassemble(program.toCharArray).isGood shouldBe true
   }
 }
