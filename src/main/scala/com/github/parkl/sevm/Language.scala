@@ -13,7 +13,7 @@ object Language {
       { case (`code`, position):: tail => ((f, position), tail) }
     }
 
-    def mkLexers0(offset: Int)(ops: Op*) =
+    def mkLexers0(offset: Int)(ops: Op*): Seq[Lexer] =
       for { (op, i) <- ops.zipWithIndex } yield mkLex0(i + offset)(op)
 
 
@@ -30,7 +30,7 @@ object Language {
     override def toString: String = f"UNKNOWN-OPCODE($code%#02x)"
   }
 
-  val lexers = Seq(
+  val lexers: Lexer = Seq(
     Arithmetic, Comparations, Hash, Environment, Block,
     MemStorageFlow, Push, Dup, Swap, Log, System
   ).flatMap(_.lexers).reduce(_ orElse _)
@@ -39,7 +39,7 @@ object Language {
     case (code, position):: tail => ((UNKNOWN_OPCODE(code), position), tail)
   }
 
-  val lexersWithUnknown = lexers orElse catchAll
+  val lexersWithUnknown: Lexer = lexers orElse catchAll
 
   object Arithmetic extends Lexers {
     case object STOP        extends Op
@@ -55,7 +55,10 @@ object Language {
     case object EXP         extends Op
     case object SIGNEXTEND  extends Op
 
-    val lexers = mkLexers0(0x00)(STOP, ADD, MUL, SUB, DIV, SDIV, MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND)
+    val lexers: Seq[Lexer] = mkLexers0(0x00)(
+      STOP, ADD, MUL, SUB, DIV, SDIV,
+      MOD, SMOD, ADDMOD, MULMOD, EXP, SIGNEXTEND
+    )
   }
 
   object Comparations extends Lexers {
@@ -71,13 +74,15 @@ object Language {
     case object NOT     extends Op
     case object BYTE    extends Op
 
-    val lexers = mkLexers0(0x10)(LT, GT, SLT, SGT, EQ, ISZERO, AND, OR, XOR, NOT, BYTE)
+    val lexers: Seq[Lexer] = mkLexers0(0x10)(
+      LT, GT, SLT, SGT, EQ, ISZERO, AND, OR, XOR, NOT, BYTE
+    )
   }
 
   object Hash extends Lexers {
     case object SHA3 extends Op
 
-    val lexers = mkLexers0(0x20)(SHA3)
+    val lexers: Seq[Lexer] = mkLexers0(0x20)(SHA3)
   }
 
   object Environment extends Lexers {
@@ -95,7 +100,7 @@ object Language {
     case object EXTCODESIZE   extends Op
     case object EXTCODECOPY   extends Op
 
-    val lexers = mkLexers0(0x30)(
+    val lexers: Seq[Lexer] = mkLexers0(0x30)(
       ADDRESS, BALANCE, ORIGIN, CALLER, CALLVALUE,
       CALLDATALOAD, CALLDATASIZE, CALLDATACOPY, CODESIZE,
       CODECOPY, GASPRICE, EXTCODESIZE, EXTCODECOPY
@@ -110,7 +115,9 @@ object Language {
     case object DIFFICULTY  extends Op
     case object GASLIMIT    extends Op
 
-    val lexers = mkLexers0(0x40)(BLOCKHASH, COINBASE, TIMESTAMP, NUMBER, DIFFICULTY, GASLIMIT)
+    val lexers: Seq[Lexer] = mkLexers0(0x40)(
+      BLOCKHASH, COINBASE, TIMESTAMP, NUMBER, DIFFICULTY, GASLIMIT
+    )
   }
 
   object MemStorageFlow extends Lexers {
@@ -127,17 +134,20 @@ object Language {
     case object GAS       extends Op
     case object JUMPDEST  extends Op
 
-    val lexers = mkLexers0(0x50)(
-      POP, MLOAD, MSTORE, MSTORE8, SLOAD, SSTORE, JUMP, JUMPI, PC, MSIZE, GAS, JUMPDEST
+    val lexers: Seq[Lexer] = mkLexers0(0x50)(
+      POP, MLOAD, MSTORE, MSTORE8, SLOAD, SSTORE, JUMP,
+      JUMPI, PC, MSIZE, GAS, JUMPDEST
     )
   }
 
   object Push extends Lexers {
     case class PUSH(args: List[Token]) extends Op {
-      override def toString: String = s"PUSH${args.length}(0x${args.map(hs => f"$hs%02x").mkString})"
+      override def toString: String =
+        s"PUSH${args.length}(0x${args.map(hs => f"$hs%02x").mkString})"
     }
 
-    val lexers = for (i <- 0 until 32) yield mkLexN(0x60 + i, i + 1)(PUSH)
+    val lexers: Seq[Lexer] =
+      for (i <- 0 until 32) yield mkLexN(0x60 + i, i + 1)(PUSH)
   }
 
   object Dup extends Lexers {
@@ -145,7 +155,8 @@ object Language {
       override def toString: String = s"DUP$stackItem"
     }
 
-    val lexers = for (i <- 0 until 16) yield mkLex0(0x80 + i)(DUP(i + 1))
+    val lexers: Seq[Lexer] =
+      for (i <- 0 until 16) yield mkLex0(0x80 + i)(DUP(i + 1))
   }
 
   object Swap extends Lexers {
@@ -153,7 +164,8 @@ object Language {
       override def toString: String = s"SWAP$stackItem"
     }
 
-    val lexers = for (i <- 0 until 16) yield mkLex0(0x90 + i)(SWAP(i + 1))
+    val lexers: Seq[Lexer] =
+      for (i <- 0 until 16) yield mkLex0(0x90 + i)(SWAP(i + 1))
   }
 
   object Log extends Lexers { // https://www.youtube.com/watch?v=-fQGPZTECYs
@@ -161,7 +173,8 @@ object Language {
       override def toString: String = s"LOG$topics"
     }
 
-    val lexers = for (i <- 0 to 4) yield mkLex0(0xa0 + i)(LOG(i))
+    val lexers: Seq[Lexer] =
+      for (i <- 0 to 4) yield mkLex0(0xa0 + i)(LOG(i))
   }
 
   object System extends Lexers {
@@ -172,7 +185,7 @@ object Language {
     case object DELEGATECALL  extends Op
     case object SUICIDE       extends Op
 
-    val lexers = mkLexers0(0xf0)(
+    val lexers: Seq[Lexer] = mkLexers0(0xf0)(
       CREATE, CALL, CALLCODE, RETURN, DELEGATECALL
     ) :+ mkLex0(0xff)(SUICIDE)
   }
